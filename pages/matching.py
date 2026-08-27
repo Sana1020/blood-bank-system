@@ -1,11 +1,9 @@
 import streamlit as st
 
 from src.database.connection import SessionLocal
-from src.database.crud import get_blood_request, get_all_donors
-from src.algorithms.compatibility import is_compatible
-from src.algorithms.eligibility import is_eligible
-from src.algorithms.distance import calculate_distance
-from src.algorithms.ranking import calculate_ranking_score
+from src.database.crud import get_blood_request
+from src.database.models import BloodRequest
+from src.services.matching_service import find_matches
 
 
 st.title("🩸 Blood Donor Matching")
@@ -13,19 +11,10 @@ st.title("🩸 Blood Donor Matching")
 session = SessionLocal()
 
 try:
+    # Get all blood requests
     requests = (
-        session.query(
-            __import__(
-                "src.database.models",
-                fromlist=["BloodRequest"]
-            ).BloodRequest
-        )
-        .order_by(
-            __import__(
-                "src.database.models",
-                fromlist=["BloodRequest"]
-            ).BloodRequest.created_at.desc()
-        )
+        session.query(BloodRequest)
+        .order_by(BloodRequest.created_at.desc())
         .all()
     )
 
@@ -33,6 +22,7 @@ try:
         st.warning("No blood requests found.")
 
     else:
+        # Request selection
         request_options = {
             f"Request #{request.id} | "
             f"{request.blood_type} | "
@@ -58,71 +48,25 @@ try:
                 f"**Units Required:** {request.units_required}"
             )
 
+            st.divider()
+
             if st.button(" Find Matches", type="primary"):
 
-                donors = get_all_donors(session)
-
-                candidates = []
-
-                for donor in donors:
-
-                    # 1. Eligibility
-                    if not is_eligible(
-                        donor.age,
-                        donor.is_available,
-                        donor.last_donation_date,
-                    ):
-                        continue
-
-                    # 2. Blood compatibility
-                    if not is_compatible(
-                        donor.blood_type,
-                        request.blood_type,
-                    ):
-                        continue
-
-                    # 3. Distance
-                    distance_km = calculate_distance(
-                        donor.latitude,
-                        donor.longitude,
-                        request.latitude,
-                        request.longitude,
-                    )
-
-                    # 4. Compatibility score
-                    compatibility_score = 100.0
-
-                    # 5. Ranking
-                    ranking_score = calculate_ranking_score(
-                        compatibility_score=compatibility_score,
-                        distance_km=distance_km,
-                        urgency=request.urgency,
-                    )
-
-                    candidates.append(
-                        {
-                            "donor": donor,
-                            "compatibility_score": compatibility_score,
-                            "distance_km": distance_km,
-                            "ranking_score": ranking_score,
-                        }
-                    )
-
-                # Sort best → worst
-                candidates.sort(
-                    key=lambda x: x["ranking_score"],
-                    reverse=True,
+                # Matching logic is handled by the service layer
+                matches = find_matches(
+                    session,
+                    request.id,
                 )
 
-                if not candidates:
+                if not matches:
                     st.error(
                         "❌ No eligible compatible donors found."
                     )
 
                 else:
                     st.success(
-                        f" Found {len(candidates)} "
-                        f"eligible compatible donor(s)."
+                        f"✅ Found {len(matches)} "
+                        f"recommended donor(s)."
                     )
 
                     st.caption(
@@ -136,10 +80,10 @@ try:
                     # Best Match
                     # =========================
 
-                    best = candidates[0]
-                    donor = best["donor"]
+                    best = matches[0]
+                    donor = best.donor
 
-                    st.subheader(" Best Match")
+                    st.subheader("🥇 Best Match")
 
                     col1, col2, col3, col4 = st.columns(4)
 
@@ -155,12 +99,12 @@ try:
 
                     col3.metric(
                         "Distance",
-                        f"{best['distance_km']:.2f} km",
+                        f"{best.distance_km:.2f} km",
                     )
 
                     col4.metric(
                         "Ranking Score",
-                        f"{best['ranking_score']:.1f}",
+                        f"{best.ranking_score:.1f}",
                     )
 
                     st.success(
@@ -173,16 +117,16 @@ try:
                     # Other Recommended Donors
                     # =========================
 
-                    if len(candidates) > 1:
+                    if len(matches) > 1:
 
                         st.subheader("👥 Other Recommended Donors")
 
-                        for index, candidate in enumerate(
-                            candidates[1:],
+                        for index, match in enumerate(
+                            matches[1:],
                             start=2,
                         ):
 
-                            donor = candidate["donor"]
+                            donor = match.donor
 
                             with st.container():
 
@@ -199,17 +143,17 @@ try:
 
                                 col2.metric(
                                     "Distance",
-                                    f"{candidate['distance_km']:.2f} km",
+                                    f"{match.distance_km:.2f} km",
                                 )
 
                                 col3.metric(
                                     "Compatibility",
-                                    f"{candidate['compatibility_score']:.0f}%",
+                                    f"{match.compatibility_score:.0f}%",
                                 )
 
                                 col4.metric(
                                     "Ranking Score",
-                                    f"{candidate['ranking_score']:.1f}",
+                                    f"{match.ranking_score:.1f}",
                                 )
 
                                 st.divider()
