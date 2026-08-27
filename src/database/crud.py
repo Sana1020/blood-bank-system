@@ -25,7 +25,11 @@ def get_donor(session: Session, donor_id: int):
 
 
 def get_all_donors(session: Session):
-    return session.query(Donor).all()
+    return (
+        session.query(Donor)
+        .order_by(Donor.id.desc())
+        .all()
+    )
 
 
 def update_donor(session: Session, donor_id: int, **data):
@@ -180,3 +184,17 @@ def get_matches_by_request(
         .order_by(Match.ranking_score.desc())
         .all()
     )
+def delete_matches_by_request(
+    session: Session,
+    request_id: int,
+):
+    matches = (
+        session.query(Match)
+        .filter(Match.request_id == request_id)
+        .all()
+    )
+
+    for match in matches:
+        session.delete(match)
+
+    session.commit()

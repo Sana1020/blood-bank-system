@@ -16,56 +16,20 @@ class Base(DeclarativeBase):
     pass
 
 
-
-
 class Donor(Base):
     __tablename__ = "donors"
 
-    id: Mapped[int] = mapped_column(
-        Integer,
-        primary_key=True,
-        autoincrement=True
-    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
-    name: Mapped[str] = mapped_column(
-        String(100),
-        nullable=False
-    )
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    age: Mapped[int] = mapped_column(Integer, nullable=False)
+    gender: Mapped[str] = mapped_column(String(20), nullable=False)
+    blood_type: Mapped[str] = mapped_column(String(3), nullable=False)
+    phone: Mapped[str] = mapped_column(String(20), nullable=False)
+    location: Mapped[str] = mapped_column(String(150), nullable=False)
 
-    age: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False
-    )
-
-    gender: Mapped[str] = mapped_column(
-        String(20),
-        nullable=False
-    )
-
-    blood_type: Mapped[str] = mapped_column(
-        String(3),
-        nullable=False
-    )
-
-    phone: Mapped[str] = mapped_column(
-        String(20),
-        nullable=False
-    )
-
-    location: Mapped[str] = mapped_column(
-        String(150),
-        nullable=False
-    )
-
-    latitude: Mapped[float] = mapped_column(
-        Float,
-        nullable=False
-    )
-
-    longitude: Mapped[float] = mapped_column(
-        Float,
-        nullable=False
-    )
+    latitude: Mapped[float] = mapped_column(Float, nullable=False)
+    longitude: Mapped[float] = mapped_column(Float, nullable=False)
 
     is_available: Mapped[bool] = mapped_column(
         Boolean,
@@ -84,7 +48,6 @@ class Donor(Base):
         nullable=False
     )
 
-    # Relationships
     donations: Mapped[list["Donation"]] = relationship(
         back_populates="donor"
     )
@@ -94,56 +57,20 @@ class Donor(Base):
     )
 
 
-
-
 class Patient(Base):
     __tablename__ = "patients"
 
-    id: Mapped[int] = mapped_column(
-        Integer,
-        primary_key=True,
-        autoincrement=True
-    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
-    name: Mapped[str] = mapped_column(
-        String(100),
-        nullable=False
-    )
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    age: Mapped[int] = mapped_column(Integer, nullable=False)
+    gender: Mapped[str] = mapped_column(String(20), nullable=False)
+    blood_type: Mapped[str] = mapped_column(String(3), nullable=False)
+    hospital: Mapped[str] = mapped_column(String(150), nullable=False)
+    location: Mapped[str] = mapped_column(String(150), nullable=False)
 
-    age: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False
-    )
-
-    gender: Mapped[str] = mapped_column(
-        String(20),
-        nullable=False
-    )
-
-    blood_type: Mapped[str] = mapped_column(
-        String(3),
-        nullable=False
-    )
-
-    hospital: Mapped[str] = mapped_column(
-        String(150),
-        nullable=False
-    )
-
-    location: Mapped[str] = mapped_column(
-        String(150),
-        nullable=False
-    )
-
-    latitude: Mapped[float] = mapped_column(
-        Float,
-        nullable=False
-    )
-
-    longitude: Mapped[float] = mapped_column(
-        Float,
-        nullable=False
-    )
+    latitude: Mapped[float] = mapped_column(Float, nullable=False)
+    longitude: Mapped[float] = mapped_column(Float, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
@@ -151,62 +78,29 @@ class Patient(Base):
         nullable=False
     )
 
-    # Relationships
     requests: Mapped[list["BloodRequest"]] = relationship(
         back_populates="patient"
     )
 
 
-
-
 class BloodRequest(Base):
     __tablename__ = "blood_requests"
 
-    id: Mapped[int] = mapped_column(
-        Integer,
-        primary_key=True,
-        autoincrement=True
-    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
     patient_id: Mapped[int] = mapped_column(
         ForeignKey("patients.id"),
         nullable=False
     )
 
-    blood_type: Mapped[str] = mapped_column(
-        String(3),
-        nullable=False
-    )
+    blood_type: Mapped[str] = mapped_column(String(3), nullable=False)
+    units_required: Mapped[int] = mapped_column(Integer, nullable=False)
+    urgency: Mapped[str] = mapped_column(String(20), nullable=False)
+    hospital: Mapped[str] = mapped_column(String(150), nullable=False)
+    location: Mapped[str] = mapped_column(String(150), nullable=False)
 
-    units_required: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False
-    )
-
-    urgency: Mapped[str] = mapped_column(
-        String(20),
-        nullable=False
-    )
-
-    hospital: Mapped[str] = mapped_column(
-        String(150),
-        nullable=False
-    )
-
-    location: Mapped[str] = mapped_column(
-        String(150),
-        nullable=False
-    )
-
-    latitude: Mapped[float] = mapped_column(
-        Float,
-        nullable=False
-    )
-
-    longitude: Mapped[float] = mapped_column(
-        Float,
-        nullable=False
-    )
+    latitude: Mapped[float] = mapped_column(Float, nullable=False)
+    longitude: Mapped[float] = mapped_column(Float, nullable=False)
 
     status: Mapped[str] = mapped_column(
         String(20),
@@ -220,7 +114,6 @@ class BloodRequest(Base):
         nullable=False
     )
 
-    # Relationships
     patient: Mapped["Patient"] = relationship(
         back_populates="requests"
     )
@@ -230,64 +123,35 @@ class BloodRequest(Base):
     )
 
 
-
-
 class Donation(Base):
     __tablename__ = "donations"
 
-    id: Mapped[int] = mapped_column(
-        Integer,
-        primary_key=True,
-        autoincrement=True
-    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
     donor_id: Mapped[int] = mapped_column(
         ForeignKey("donors.id"),
         nullable=False
     )
 
-    donation_date: Mapped[date] = mapped_column(
-        Date,
-        nullable=False
-    )
-
-    blood_type: Mapped[str] = mapped_column(
-        String(3),
-        nullable=False
-    )
-
-    units_donated: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False
-    )
-
-    location: Mapped[str] = mapped_column(
-        String(150),
-        nullable=False
-    )
+    donation_date: Mapped[date] = mapped_column(Date, nullable=False)
+    blood_type: Mapped[str] = mapped_column(String(3), nullable=False)
+    units_donated: Mapped[int] = mapped_column(Integer, nullable=False)
+    location: Mapped[str] = mapped_column(String(150), nullable=False)
 
     status: Mapped[str] = mapped_column(
         String(20),
-        default="Completed",
-        nullable=False
+        default="Completed"
     )
 
-    # Relationships
     donor: Mapped["Donor"] = relationship(
         back_populates="donations"
     )
 
 
-
-
 class BloodInventory(Base):
     __tablename__ = "blood_inventory"
 
-    id: Mapped[int] = mapped_column(
-        Integer,
-        primary_key=True,
-        autoincrement=True
-    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
     blood_type: Mapped[str] = mapped_column(
         String(3),
@@ -315,15 +179,10 @@ class BloodInventory(Base):
     )
 
 
-
 class Match(Base):
     __tablename__ = "matches"
 
-    id: Mapped[int] = mapped_column(
-        Integer,
-        primary_key=True,
-        autoincrement=True
-    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
     request_id: Mapped[int] = mapped_column(
         ForeignKey("blood_requests.id"),
@@ -352,8 +211,7 @@ class Match(Base):
 
     status: Mapped[str] = mapped_column(
         String(20),
-        default="Suggested",
-        nullable=False
+        default="Suggested"
     )
 
     created_at: Mapped[datetime] = mapped_column(
@@ -362,7 +220,6 @@ class Match(Base):
         nullable=False
     )
 
-    # Relationships
     donor: Mapped["Donor"] = relationship(
         back_populates="matches"
     )
