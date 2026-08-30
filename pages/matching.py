@@ -50,7 +50,7 @@ try:
 
             st.divider()
 
-            if st.button("🔎 Find Matches", type="primary"):
+            if st.button(" Find Matches", type="primary"):
 
                 # Matching logic is handled by the service layer
                 matches = find_matches(
