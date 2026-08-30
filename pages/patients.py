@@ -7,16 +7,169 @@ from src.database.crud import (
     get_all_patients,
 )
 
+# =========================================================
+# Page Configuration
+# =========================================================
 
-st.title("🩺 Patients Management")
-st.caption("Register and manage patient records")
+st.set_page_config(
+    page_title="Patients Management",
+    page_icon="🩺",
+    layout="wide",
+)
+
+# =========================================================
+# Custom Theme - Sidebar
+# =========================================================
+
+st.markdown(
+    """
+    <style>
+
+    /* =========================
+       Sidebar
+       ========================= */
+
+    section[data-testid="stSidebar"] {
+        background-color: #991b1b;
+    }
+
+    section[data-testid="stSidebar"] * {
+        color: white !important;
+    }
+
+    section[data-testid="stSidebar"] hr {
+        border-color: rgba(255,255,255,0.18);
+    }
+
+    section[data-testid="stSidebar"] button {
+        color: #991b1b !important;
+    }
+
+    /* =========================
+       Main Titles
+       ========================= */
+
+    h1 {
+        color: #991b1b !important;
+        font-weight: 800 !important;
+        font-size: 44px !important;
+    }
+
+    h2 {
+        color: #991b1b !important;
+        font-weight: 750 !important;
+    }
+
+    h3 {
+        color: #1f2937 !important;
+        font-weight: 700 !important;
+    }
+
+    /* =========================
+       Metrics
+       ========================= */
+
+    div[data-testid="stMetric"] {
+        background-color: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 22px;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+    }
+
+    div[data-testid="stMetricLabel"] {
+        color: #6b7280 !important;
+    }
+
+    div[data-testid="stMetricValue"] {
+        color: #991b1b !important;
+        font-weight: 800 !important;
+    }
+
+    /* =========================
+       Buttons
+       ========================= */
+
+    div.stButton > button {
+        background-color: #991b1b;
+        color: white !important;
+        border: none;
+        border-radius: 9px;
+        font-weight: 600;
+    }
+
+    div.stButton > button:hover {
+        background-color: #7f1d1d;
+        color: white !important;
+    }
+
+    /* =========================
+       Divider
+       ========================= */
+
+    hr {
+        border: none;
+        border-top: 1px solid #e1e5ea;
+        margin: 35px 0;
+    }
+
+    /* =========================
+       Dataframe
+       ========================= */
+
+    div[data-testid="stDataFrame"] {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+# =========================================================
+# Sidebar
+# =========================================================
+
+# =========================================================
+# Sidebar
+# =========================================================
+
+# =========================================================
+# Sidebar
+# =========================================================
+
+with st.sidebar:
+    st.title("Smart Blood Bank")
+    st.caption("Blood Management System")
+
+    st.divider()
+
+    st.subheader("Navigation")
+
+    st.write(
+        "Use the navigation menu to access "
+        "the different modules of the system."
+    )
+
+    st.divider()
+
+    st.success(" System Operational")
+# =========================================================
+# Page Header
+# =========================================================
+
+st.title(" Patients Management")
+
+st.caption(
+    "Register and manage patient records"
+)
 
 
-# =========================
+# =========================================================
 # Add Patient
-# =========================
+# =========================================================
 
-st.subheader("➕ Register New Patient")
+st.subheader(" Register New Patient")
 
 with st.form("patient_form"):
 
@@ -80,9 +233,14 @@ with st.form("patient_form"):
     )
 
 
+# =========================================================
+# Save Patient
+# =========================================================
+
 if submitted:
 
     if not name or not hospital or not location:
+
         st.error(
             "Please fill in Name, Hospital and Location."
         )
@@ -112,15 +270,16 @@ if submitted:
             st.rerun()
 
         finally:
+
             session.close()
 
 
 st.divider()
 
 
-# =========================
+# =========================================================
 # Registered Patients
-# =========================
+# =========================================================
 
 st.subheader("📋 Registered Patients")
 
@@ -132,7 +291,9 @@ try:
 
     if not patients:
 
-        st.info("No patient records found.")
+        st.info(
+            "No patient records found."
+        )
 
     else:
 
@@ -161,4 +322,5 @@ try:
         )
 
 finally:
+
     session.close()

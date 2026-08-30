@@ -11,17 +11,168 @@ from src.database.models import (
     Match,
 )
 
+# =========================================================
+# Page Configuration
+# =========================================================
+
+st.set_page_config(
+    page_title="Statistics & Analytics",
+    page_icon="📊",
+    layout="wide",
+)
+
+# =========================================================
+# Custom Theme
+# =========================================================
+
+st.markdown(
+    """
+    <style>
+
+    /* =========================
+       Sidebar
+       ========================= */
+
+    section[data-testid="stSidebar"] {
+        background-color: #991b1b;
+    }
+
+    section[data-testid="stSidebar"] * {
+        color: white !important;
+    }
+
+    section[data-testid="stSidebar"] hr {
+        border-color: rgba(255,255,255,0.18);
+    }
+
+    section[data-testid="stSidebar"] button {
+        color: #991b1b !important;
+    }
+
+    /* =========================
+       Main Titles
+       ========================= */
+
+    h1 {
+        color: #991b1b !important;
+        font-weight: 800 !important;
+        font-size: 44px !important;
+    }
+
+    h2 {
+        color: #991b1b !important;
+        font-weight: 750 !important;
+    }
+
+    h3 {
+        color: #1f2937 !important;
+        font-weight: 700 !important;
+    }
+
+    /* =========================
+       Metrics
+       ========================= */
+
+    div[data-testid="stMetric"] {
+        background-color: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 22px;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+    }
+
+    div[data-testid="stMetricLabel"] {
+        color: #6b7280 !important;
+    }
+
+    div[data-testid="stMetricValue"] {
+        color: #991b1b !important;
+        font-weight: 800 !important;
+    }
+
+    /* =========================
+       Buttons
+       ========================= */
+
+    div.stButton > button {
+        background-color: #991b1b;
+        color: white !important;
+        border: none;
+        border-radius: 9px;
+        font-weight: 600;
+    }
+
+    div.stButton > button:hover {
+        background-color: #7f1d1d;
+        color: white !important;
+    }
+
+    /* =========================
+       Divider
+       ========================= */
+
+    hr {
+        border: none;
+        border-top: 1px solid #e1e5ea;
+        margin: 35px 0;
+    }
+
+    /* =========================
+       Dataframe
+       ========================= */
+
+    div[data-testid="stDataFrame"] {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# =========================================================
+# Sidebar
+# =========================================================
+
+with st.sidebar:
+    st.title("Smart Blood Bank")
+    st.caption("Blood Management System")
+
+    st.divider()
+
+    st.subheader("Navigation")
+
+    st.write(
+        "Use the navigation menu to access "
+        "the different modules of the system."
+    )
+
+    st.divider()
+
+    st.success(" System Operational")
+
+# =========================================================
+# Page Header
+# =========================================================
 
 st.title("📊 Statistics & Analytics")
-st.caption("Analyze blood bank activity and system performance")
 
+st.caption(
+    "Analyze blood bank activity and system performance"
+)
+
+# =========================================================
+# Database
+# =========================================================
 
 session = SessionLocal()
 
 try:
-    # =========================
+
+    # =====================================================
     # Load Data
-    # =========================
+    # =====================================================
 
     donors = session.query(Donor).all()
     patients = session.query(Patient).all()
@@ -30,19 +181,19 @@ try:
     donations = session.query(Donation).all()
     matches = session.query(Match).all()
 
-    # =========================
+    # =====================================================
     # Summary
-    # =========================
+    # =====================================================
 
     total_donors = len(donors)
+
     available_donors = sum(
-        donor.is_available
-        for donor in donors
+        1 for donor in donors
+        if donor.is_available
     )
 
     total_patients = len(patients)
     total_requests = len(requests)
-
     total_donations = len(donations)
     total_matches = len(matches)
 
@@ -80,38 +231,57 @@ try:
 
     st.divider()
 
-    # =========================
+    # =====================================================
     # Donor Statistics
-    # =========================
+    # =====================================================
 
-    st.subheader("🧑‍⚕️ Donor Statistics")
+    st.subheader(" Donor Statistics")
 
     donor_col1, donor_col2 = st.columns(2)
 
-    # Blood types
+    # -------------------------
+    # Blood Types
+    # -------------------------
+
     donor_blood_counts = {}
 
     for donor in donors:
-        donor_blood_counts[donor.blood_type] = (
-            donor_blood_counts.get(donor.blood_type, 0) + 1
+        blood_type = donor.blood_type
+
+        donor_blood_counts[blood_type] = (
+            donor_blood_counts.get(blood_type, 0) + 1
         )
 
     if donor_blood_counts:
 
         donor_df = pd.DataFrame(
             {
-                "Blood Type": list(donor_blood_counts.keys()),
-                "Donors": list(donor_blood_counts.values()),
+                "Blood Type": list(
+                    donor_blood_counts.keys()
+                ),
+                "Donors": list(
+                    donor_blood_counts.values()
+                ),
             }
         )
 
         with donor_col1:
+
             st.write("**Donors by Blood Type**")
+
             st.bar_chart(
                 donor_df.set_index("Blood Type")
             )
 
+    else:
+
+        with donor_col1:
+            st.info("No donor data available.")
+
+    # -------------------------
     # Availability
+    # -------------------------
+
     availability_data = pd.DataFrame(
         {
             "Status": [
@@ -126,6 +296,7 @@ try:
     )
 
     with donor_col2:
+
         st.write("**Donor Availability**")
 
         st.bar_chart(
@@ -134,25 +305,32 @@ try:
 
     st.divider()
 
-    # =========================
+    # =====================================================
     # Patient Statistics
-    # =========================
+    # =====================================================
 
-    st.subheader("🩺 Patient Statistics")
+    st.subheader(" Patient Statistics")
 
     patient_blood_counts = {}
 
     for patient in patients:
-        patient_blood_counts[patient.blood_type] = (
-            patient_blood_counts.get(patient.blood_type, 0) + 1
+
+        blood_type = patient.blood_type
+
+        patient_blood_counts[blood_type] = (
+            patient_blood_counts.get(blood_type, 0) + 1
         )
 
     if patient_blood_counts:
 
         patient_df = pd.DataFrame(
             {
-                "Blood Type": list(patient_blood_counts.keys()),
-                "Patients": list(patient_blood_counts.values()),
+                "Blood Type": list(
+                    patient_blood_counts.keys()
+                ),
+                "Patients": list(
+                    patient_blood_counts.values()
+                ),
             }
         )
 
@@ -161,88 +339,130 @@ try:
         )
 
     else:
-        st.info("No patient data available.")
+
+        st.info(
+            "No patient data available."
+        )
 
     st.divider()
 
-    # =========================
+    # =====================================================
     # Request Statistics
-    # =========================
+    # =====================================================
 
-    st.subheader("📋 Blood Request Statistics")
+    st.subheader(" Blood Request Statistics")
 
     request_col1, request_col2 = st.columns(2)
 
-    # Status
+    # -------------------------
+    # Request Status
+    # -------------------------
+
     status_counts = {}
 
     for request in requests:
-        status_counts[request.status] = (
-            status_counts.get(request.status, 0) + 1
+
+        status = request.status
+
+        status_counts[status] = (
+            status_counts.get(status, 0) + 1
         )
 
     if status_counts:
 
         status_df = pd.DataFrame(
             {
-                "Status": list(status_counts.keys()),
-                "Requests": list(status_counts.values()),
+                "Status": list(
+                    status_counts.keys()
+                ),
+                "Requests": list(
+                    status_counts.values()
+                ),
             }
         )
 
         with request_col1:
+
             st.write("**Requests by Status**")
 
             st.bar_chart(
                 status_df.set_index("Status")
             )
 
+    else:
+
+        with request_col1:
+            st.info("No request status data.")
+
+    # -------------------------
     # Urgency
+    # -------------------------
+
     urgency_counts = {}
 
     for request in requests:
-        urgency_counts[request.urgency] = (
-            urgency_counts.get(request.urgency, 0) + 1
+
+        urgency = request.urgency
+
+        urgency_counts[urgency] = (
+            urgency_counts.get(urgency, 0) + 1
         )
 
     if urgency_counts:
 
         urgency_df = pd.DataFrame(
             {
-                "Urgency": list(urgency_counts.keys()),
-                "Requests": list(urgency_counts.values()),
+                "Urgency": list(
+                    urgency_counts.keys()
+                ),
+                "Requests": list(
+                    urgency_counts.values()
+                ),
             }
         )
 
         with request_col2:
+
             st.write("**Requests by Urgency**")
 
             st.bar_chart(
                 urgency_df.set_index("Urgency")
             )
 
+    else:
+
+        with request_col2:
+            st.info("No urgency data.")
+
     st.divider()
 
-    # =========================
+    # =====================================================
     # Blood Type Demand
-    # =========================
+    # =====================================================
 
-    st.subheader("🩸 Blood Type Demand")
+    st.subheader(" Blood Type Demand")
 
     blood_demand = {}
 
     for request in requests:
-        blood_demand[request.blood_type] = (
-            blood_demand.get(request.blood_type, 0)
-            + request.units_required
+
+        blood_type = request.blood_type
+        units = request.units_required
+
+        blood_demand[blood_type] = (
+            blood_demand.get(blood_type, 0) + units
         )
 
     if blood_demand:
 
         demand_df = pd.DataFrame(
             {
-                "Blood Type": list(blood_demand.keys()),
-                "Units Required": list(blood_demand.values()),
+                "Blood Type": list(
+                    blood_demand.keys()
+                ),
+                "Units Required": list(
+                    blood_demand.values()
+                ),
             }
         )
 
@@ -251,15 +471,18 @@ try:
         )
 
     else:
-        st.info("No blood request data available.")
+
+        st.info(
+            "No blood request data available."
+        )
 
     st.divider()
 
-    # =========================
+    # =====================================================
     # Inventory Statistics
-    # =========================
+    # =====================================================
 
-    st.subheader("📦 Inventory Statistics")
+    st.subheader(" Inventory Statistics")
 
     if inventory:
 
@@ -287,30 +510,42 @@ try:
         )
 
     else:
-        st.info("No inventory records found.")
+
+        st.info(
+            "No inventory records found."
+        )
 
     st.divider()
 
-    # =========================
+    # =====================================================
     # Matching Statistics
-    # =========================
+    # =====================================================
 
-    st.subheader("🔎 Matching Statistics")
+    st.subheader(" Matching Statistics")
 
     if matches:
 
         average_distance = (
-            sum(match.distance_km for match in matches)
+            sum(
+                match.distance_km
+                for match in matches
+            )
             / len(matches)
         )
 
         average_score = (
-            sum(match.ranking_score for match in matches)
+            sum(
+                match.ranking_score
+                for match in matches
+            )
             / len(matches)
         )
 
         compatibility_average = (
-            sum(match.compatibility_score for match in matches)
+            sum(
+                match.compatibility_score
+                for match in matches
+            )
             / len(matches)
         )
 
@@ -336,14 +571,21 @@ try:
         match_status_counts = {}
 
         for match in matches:
-            match_status_counts[match.status] = (
-                match_status_counts.get(match.status, 0) + 1
+
+            status = match.status
+
+            match_status_counts[status] = (
+                match_status_counts.get(status, 0) + 1
             )
 
         match_df = pd.DataFrame(
             {
-                "Status": list(match_status_counts.keys()),
-                "Matches": list(match_status_counts.values()),
+                "Status": list(
+                    match_status_counts.keys()
+                ),
+                "Matches": list(
+                    match_status_counts.values()
+                ),
             }
         )
 
@@ -352,7 +594,11 @@ try:
         )
 
     else:
-        st.info("No matching data available.")
+
+        st.info(
+            "No matching data available."
+        )
 
 finally:
+
     session.close()
