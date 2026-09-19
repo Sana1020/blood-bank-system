@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 
@@ -126,13 +127,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-# =========================================================
-# Sidebar
-# =========================================================
-
-# =========================================================
-# Sidebar
-# =========================================================
 
 # =========================================================
 # Sidebar
@@ -153,23 +147,23 @@ with st.sidebar:
 
     st.divider()
 
-    st.success(" System Operational")
+    st.success("System Operational")
+
 # =========================================================
 # Page Header
 # =========================================================
 
-st.title(" Patients Management")
+st.title("Patients Management")
 
 st.caption(
     "Register and manage patient records"
 )
 
-
 # =========================================================
 # Add Patient
 # =========================================================
 
-st.subheader(" Register New Patient")
+st.subheader("Register New Patient")
 
 with st.form("patient_form"):
 
@@ -232,7 +226,6 @@ with st.form("patient_form"):
         type="primary",
     )
 
-
 # =========================================================
 # Save Patient
 # =========================================================
@@ -273,9 +266,7 @@ if submitted:
 
             session.close()
 
-
 st.divider()
-
 
 # =========================================================
 # Registered Patients
@@ -296,6 +287,9 @@ try:
         )
 
     else:
+
+        # Show the newest registered patient first
+        patients = list(reversed(patients))
 
         data = []
 
@@ -324,3 +318,4 @@ try:
 finally:
 
     session.close()
+

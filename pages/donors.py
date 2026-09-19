@@ -6,15 +6,20 @@ from src.database.crud import create_donor, get_all_donors
 
 
 # =========================================================
-# Custom Theme - Sidebar
+# Validation Rules
 # =========================================================
+
+MIN_DONOR_AGE = 18
+MAX_DONOR_AGE = 65
+
+
+# =========================================================
+# Custom Theme
+# =========================================================
+
 st.markdown(
     """
     <style>
-
-    /* =========================
-       Sidebar
-       ========================= */
 
     section[data-testid="stSidebar"] {
         background-color: #991b1b;
@@ -32,10 +37,6 @@ st.markdown(
         color: #991b1b !important;
     }
 
-    /* =========================
-       Main Titles
-       ========================= */
-
     h1 {
         color: #991b1b !important;
         font-weight: 800 !important;
@@ -51,10 +52,6 @@ st.markdown(
         color: #1f2937 !important;
         font-weight: 700 !important;
     }
-
-    /* =========================
-       Metrics
-       ========================= */
 
     div[data-testid="stMetric"] {
         background-color: white;
@@ -73,10 +70,6 @@ st.markdown(
         font-weight: 800 !important;
     }
 
-    /* =========================
-       Buttons
-       ========================= */
-
     div.stButton > button {
         background-color: #991b1b;
         color: white !important;
@@ -90,19 +83,11 @@ st.markdown(
         color: white !important;
     }
 
-    /* =========================
-       Divider
-       ========================= */
-
     hr {
         border: none;
         border-top: 1px solid #e1e5ea;
         margin: 35px 0;
     }
-
-    /* =========================
-       Dataframe
-       ========================= */
 
     div[data-testid="stDataFrame"] {
         border-radius: 12px;
@@ -111,7 +96,14 @@ st.markdown(
 
     </style>
     """,
-    unsafe_allow_html=True,)
+    unsafe_allow_html=True,
+)
+
+
+# =========================================================
+# Sidebar
+# =========================================================
+
 with st.sidebar:
 
     st.title("Smart Blood Bank")
@@ -136,7 +128,7 @@ with st.sidebar:
 # Page Title
 # =========================================================
 
-st.title("🩸 Donors")
+st.title("Donors")
 
 
 # =========================================================
@@ -147,13 +139,17 @@ st.subheader("Add New Donor")
 
 with st.form("donor_form"):
 
-    name = st.text_input("Name")
+    name = st.text_input(
+        "Full Name",
+        placeholder="Enter donor's full name"
+    )
 
     age = st.number_input(
         "Age",
         min_value=1,
         max_value=100,
-        value=25
+        value=25,
+        step=1
     )
 
     gender = st.selectbox(
@@ -175,17 +171,27 @@ with st.form("donor_form"):
         ],
     )
 
-    phone = st.text_input("Phone")
+    phone = st.text_input(
+        "Phone Number",
+        placeholder="Enter phone number"
+    )
 
-    location = st.text_input("Location")
+    location = st.text_input(
+        "Location",
+        placeholder="Enter donor location"
+    )
 
     latitude = st.number_input(
         "Latitude",
+        min_value=-90.0,
+        max_value=90.0,
         format="%.6f"
     )
 
     longitude = st.number_input(
         "Longitude",
+        min_value=-180.0,
+        max_value=180.0,
         format="%.6f"
     )
 
@@ -196,25 +202,98 @@ with st.form("donor_form"):
 
     last_donation_date = st.date_input(
         "Last Donation Date",
-        value=None,
+        value=None
     )
 
     submitted = st.form_submit_button(
-        "Add Donor"
+        "Add Donor",
+        type="primary"
     )
 
 
 # =========================================================
-# Add Donor to Database
+# Validate and Add Donor
 # =========================================================
 
 if submitted:
 
-    if not name or not phone or not location:
+    errors = []
+
+    # Name validation
+    if not name.strip():
+        errors.append(
+            "Please enter the donor's full name."
+        )
+
+    elif len(name.strip()) < 2:
+        errors.append(
+            "The donor's name must contain at least 2 characters."
+        )
+
+    # Age validation
+    if age < MIN_DONOR_AGE or age > MAX_DONOR_AGE:
+        errors.append(
+            f"Invalid donor age. "
+            f"Donor age must be between "
+            f"{MIN_DONOR_AGE} and {MAX_DONOR_AGE} years."
+        )
+
+    # Phone validation
+    cleaned_phone = phone.strip().replace(" ", "")
+
+    if not cleaned_phone:
+        errors.append(
+            "Please enter a phone number."
+        )
+
+    elif not cleaned_phone.isdigit():
+        errors.append(
+            "Invalid phone number. "
+            "Please enter numbers only."
+        )
+
+    elif len(cleaned_phone) < 10:
+        errors.append(
+            "Invalid phone number. "
+            "Please enter a valid phone number."
+        )
+
+    # Location validation
+    if not location.strip():
+        errors.append(
+            "Please enter the donor's location."
+        )
+
+    # Coordinates validation
+    if not (-90 <= latitude <= 90):
+        errors.append(
+            "Invalid latitude. "
+            "Latitude must be between -90 and 90."
+        )
+
+    if not (-180 <= longitude <= 180):
+        errors.append(
+            "Invalid longitude. "
+            "Longitude must be between -180 and 180."
+        )
+
+    # Donation date validation
+    if last_donation_date is not None:
+        if last_donation_date > date.today():
+            errors.append(
+                "Invalid last donation date. "
+                "The date cannot be in the future."
+            )
+
+    # Display validation errors
+    if errors:
 
         st.error(
-            "Please fill in all required fields."
+            "Please correct the following issues before submitting:"
         )
+
+        for error in errors:
+            st.warning(error)
 
     else:
 
@@ -224,12 +303,12 @@ if submitted:
 
             create_donor(
                 session,
-                name=name,
+                name=name.strip(),
                 age=age,
                 gender=gender,
                 blood_type=blood_type,
-                phone=phone,
-                location=location,
+                phone=cleaned_phone,
+                location=location.strip(),
                 latitude=latitude,
                 longitude=longitude,
                 is_available=is_available,
@@ -237,7 +316,7 @@ if submitted:
             )
 
             st.success(
-                "Donor added successfully."
+                "Donor registration completed successfully."
             )
 
         finally:
@@ -262,7 +341,7 @@ try:
     if not donors:
 
         st.info(
-            "No donors found."
+            "No donors have been registered yet."
         )
 
     else:
