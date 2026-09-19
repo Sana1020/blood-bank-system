@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Smart Blood Bank
 
 ### Intelligent Blood Donor Matching System
@@ -432,6 +431,4 @@ Developed as an academic software project combining:
 ## License
 
 This project is developed for educational and academic purposes.
-=======
 
->>>>>>> origin/main
