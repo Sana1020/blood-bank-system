@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 
@@ -7,7 +8,6 @@ from src.database.models import (
     Patient,
     BloodRequest,
     BloodInventory,
-    Donation,
     Match,
 )
 
@@ -150,7 +150,7 @@ with st.sidebar:
 
     st.divider()
 
-    st.success(" System Operational")
+    st.success("System Operational")
 
 # =========================================================
 # Page Header
@@ -178,7 +178,6 @@ try:
     patients = session.query(Patient).all()
     requests = session.query(BloodRequest).all()
     inventory = session.query(BloodInventory).all()
-    donations = session.query(Donation).all()
     matches = session.query(Match).all()
 
     # =====================================================
@@ -194,10 +193,9 @@ try:
 
     total_patients = len(patients)
     total_requests = len(requests)
-    total_donations = len(donations)
     total_matches = len(matches)
 
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
+    col1, col2, col3, col4, col5 = st.columns(5)
 
     col1.metric(
         "Donors",
@@ -220,11 +218,6 @@ try:
     )
 
     col5.metric(
-        "Donations",
-        total_donations,
-    )
-
-    col6.metric(
         "Matches",
         total_matches,
     )
@@ -235,7 +228,7 @@ try:
     # Donor Statistics
     # =====================================================
 
-    st.subheader(" Donor Statistics")
+    st.subheader("Donor Statistics")
 
     donor_col1, donor_col2 = st.columns(2)
 
@@ -246,6 +239,7 @@ try:
     donor_blood_counts = {}
 
     for donor in donors:
+
         blood_type = donor.blood_type
 
         donor_blood_counts[blood_type] = (
@@ -309,7 +303,7 @@ try:
     # Patient Statistics
     # =====================================================
 
-    st.subheader(" Patient Statistics")
+    st.subheader("Patient Statistics")
 
     patient_blood_counts = {}
 
@@ -350,7 +344,7 @@ try:
     # Request Statistics
     # =====================================================
 
-    st.subheader(" Blood Request Statistics")
+    st.subheader("Blood Request Statistics")
 
     request_col1, request_col2 = st.columns(2)
 
@@ -440,7 +434,7 @@ try:
     # Blood Type Demand
     # =====================================================
 
-    st.subheader(" Blood Type Demand")
+    st.subheader("Blood Type Demand")
 
     blood_demand = {}
 
@@ -482,7 +476,7 @@ try:
     # Inventory Statistics
     # =====================================================
 
-    st.subheader(" Inventory Statistics")
+    st.subheader("Inventory Statistics")
 
     if inventory:
 
@@ -521,7 +515,7 @@ try:
     # Matching Statistics
     # =====================================================
 
-    st.subheader(" Matching Statistics")
+    st.subheader("Matching Statistics")
 
     if matches:
 
@@ -566,33 +560,6 @@ try:
             f"{compatibility_average:.1f}%",
         )
 
-        st.write("**Matches by Status**")
-
-        match_status_counts = {}
-
-        for match in matches:
-
-            status = match.status
-
-            match_status_counts[status] = (
-                match_status_counts.get(status, 0) + 1
-            )
-
-        match_df = pd.DataFrame(
-            {
-                "Status": list(
-                    match_status_counts.keys()
-                ),
-                "Matches": list(
-                    match_status_counts.values()
-                ),
-            }
-        )
-
-        st.bar_chart(
-            match_df.set_index("Status")
-        )
-
     else:
 
         st.info(
@@ -602,3 +569,4 @@ try:
 finally:
 
     session.close()
+

@@ -198,10 +198,6 @@ st.markdown(
 # Sidebar
 # =========================================================
 
-# =========================================================
-# Sidebar
-# =========================================================
-
 with st.sidebar:
 
     st.title("Smart Blood Bank")
@@ -220,6 +216,8 @@ with st.sidebar:
     st.divider()
 
     st.success("System Operational")
+
+
 # =========================================================
 # Load Requests
 # =========================================================
@@ -558,19 +556,20 @@ try:
 
 
                 # =================================================
-                # Status / Units / ID
+                # Status / Units / Update Status (التعديل الجديد هنا)
                 # =================================================
 
                 col1, col2, col3 = st.columns(3)
 
+                status_options = ["Pending", "Matching", "Fulfilled", "Cancelled"]
+                current_index = status_options.index(request.status) if request.status in status_options else 0
+
                 with col1:
-
-                    st.markdown(
-                        "**Status**"
-                    )
-
-                    st.write(
-                        request.status
+                    new_status = st.selectbox(
+                        "Update Status",
+                        options=status_options,
+                        index=current_index,
+                        key=f"status_select_{request.id}"
                     )
 
                 with col2:
@@ -601,35 +600,29 @@ try:
                 # Action
                 # =================================================
 
-                if request.status not in [
-                    "Fulfilled",
-                    "Cancelled"
-                ]:
+                col_btn1, col_btn2 = st.columns(2)
 
-                    if st.button(
-                        "Find Compatible Donors",
-                        key=f"match_{request.id}",
-                        use_container_width=True
-                    ):
+                with col_btn1:
+                    # زر لحفظ حالة الطلب الجديدة إذا تغيرت
+                    if new_status != request.status:
+                        if st.button("Save Status Change", key=f"save_status_{request.id}", use_container_width=True):
+                            request.status = new_status
+                            session.commit()
+                            st.success(f"Updated Request #{request.id} to {new_status}!")
+                            st.rerun()
 
-                        st.session_state[
-                            "selected_request_id"
-                        ] = request.id
-
-                        st.success(
-                            f"Request #{request.id} selected."
-                        )
-
-                        st.info(
-                            "Go to the Matching page "
-                            "to find the best donors."
-                        )
-
-                else:
-
-                    st.caption(
-                        "This request is no longer active."
-                    )
+                with col_btn2:
+                    if request.status not in ["Fulfilled", "Cancelled"]:
+                        if st.button(
+                            "Find Compatible Donors",
+                            key=f"match_{request.id}",
+                            use_container_width=True
+                        ):
+                            st.session_state["selected_request_id"] = request.id
+                            st.success(f"Request #{request.id} selected.")
+                            st.info("Go to the Matching page to find the best donors.")
+                    else:
+                        st.caption("This request is no longer active.")
 
                 st.write("")
 
@@ -637,3 +630,4 @@ try:
 finally:
 
     session.close()
+

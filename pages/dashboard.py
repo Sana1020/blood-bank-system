@@ -518,19 +518,16 @@ try:
 
     st.subheader("System Activity")
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
+
+    
 
     col1.metric(
-        "Total Donations",
-        total_donations,
-    )
-
-    col2.metric(
         "Total Matches",
         total_matches,
     )
 
-    col3.metric(
+    col2.metric(
         "Blood Types",
         len(inventory),
     )
