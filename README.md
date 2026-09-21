@@ -1,14 +1,6 @@
-
-
-
-
 # Smart Blood Bank
 
 ### Intelligent Blood Donor Matching System
-
-
-
-
 
 
 
@@ -427,8 +419,31 @@ pytest
 
 ---
 
+## Application Screenshots
 
+The following screenshots can be added to showcase the main system modules:
 
+* Dashboard
+* Donor Management
+* Patient Management
+* Blood Requests
+* Blood Inventory
+* Donor Matching
+* Statistics
+
+Example:
+
+```markdown
+![Dashboard](screenshots/dashboard.png)
+
+![Donor Matching](screenshots/matching.png)
+
+![Blood Inventory](screenshots/inventory.png)
+
+![Statistics](screenshots/statistics.png)
+```
+
+---
 
 ## Project Goals
 

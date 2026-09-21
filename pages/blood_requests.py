@@ -1,9 +1,13 @@
+
 import streamlit as st
 
 from src.database.connection import SessionLocal
 from src.database.crud import (
     get_all_blood_requests,
+    get_all_patients,
     get_patient,
+    create_blood_request,
+    get_inventory_by_type,
 )
 
 
@@ -27,10 +31,6 @@ st.markdown(
     """
     <style>
 
-    /* =====================================================
-       Main Application
-       ===================================================== */
-
     .stApp {
         background-color: #f7f8fa;
     }
@@ -40,11 +40,6 @@ st.markdown(
         padding-top: 45px;
         padding-bottom: 60px;
     }
-
-
-    /* =====================================================
-       Sidebar
-       ===================================================== */
 
     section[data-testid="stSidebar"] {
         background-color: #991b1b;
@@ -58,15 +53,9 @@ st.markdown(
         border-color: rgba(255, 255, 255, 0.18);
     }
 
-    /* Sidebar navigation buttons */
     section[data-testid="stSidebar"] button {
         color: #991b1b !important;
     }
-
-
-    /* =====================================================
-       Main Titles
-       ===================================================== */
 
     h1 {
         color: #991b1b !important;
@@ -86,20 +75,10 @@ st.markdown(
         font-weight: 700 !important;
     }
 
-
-    /* =====================================================
-       Text
-       ===================================================== */
-
     p {
         color: #5f6b7a;
         line-height: 1.7;
     }
-
-
-    /* =====================================================
-       Metrics
-       ===================================================== */
 
     div[data-testid="stMetric"] {
         background-color: white;
@@ -118,11 +97,6 @@ st.markdown(
         font-weight: 800 !important;
     }
 
-
-    /* =====================================================
-       Request Cards
-       ===================================================== */
-
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: white;
         border-radius: 14px;
@@ -136,11 +110,6 @@ st.markdown(
         box-shadow: 0 6px 20px rgba(153, 27, 27, 0.10);
         transform: translateY(-2px);
     }
-
-
-    /* =====================================================
-       Buttons
-       ===================================================== */
 
     div.stButton > button {
         background-color: #991b1b;
@@ -158,31 +127,16 @@ st.markdown(
         border: none;
     }
 
-
-    /* =====================================================
-       Select Boxes
-       ===================================================== */
-
     div[data-baseweb="select"] > div {
         border-radius: 9px;
         border: 1px solid #d1d5db;
     }
-
-
-    /* =====================================================
-       Divider
-       ===================================================== */
 
     hr {
         border: none;
         border-top: 1px solid #e1e5ea;
         margin: 35px 0;
     }
-
-
-    /* =====================================================
-       Alerts
-       ===================================================== */
 
     div[data-testid="stAlert"] {
         border-radius: 10px;
@@ -219,12 +173,165 @@ with st.sidebar:
 
 
 # =========================================================
-# Load Requests
+# Page Header
+# =========================================================
+
+st.title("Blood Requests")
+
+st.caption(
+    "Manage and monitor blood donation requests"
+)
+
+
+# =========================================================
+# Database Session
 # =========================================================
 
 session = SessionLocal()
 
 try:
+
+    # =====================================================
+    # Load Patients
+    # =====================================================
+
+    patients = get_all_patients(session)
+
+
+    # =====================================================
+    # Create New Blood Request
+    # =====================================================
+
+    st.subheader("Create New Blood Request")
+
+    if not patients:
+
+        st.info(
+            "No patients found. "
+            "Please register a patient first."
+        )
+
+    else:
+
+        with st.form("blood_request_form"):
+
+            patient_options = {
+                f"{patient.name} (ID: {patient.id})": patient
+                for patient in patients
+            }
+
+            selected_patient_name = st.selectbox(
+                "Patient",
+                list(patient_options.keys())
+            )
+
+            selected_patient = patient_options[
+                selected_patient_name
+            ]
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+
+                blood_type = st.selectbox(
+                    "Blood Type",
+                    [
+                        "O-",
+                        "O+",
+                        "A-",
+                        "A+",
+                        "B-",
+                        "B+",
+                        "AB-",
+                        "AB+",
+                    ]
+                )
+
+                units_required = st.number_input(
+                    "Units Required",
+                    min_value=1,
+                    value=1,
+                    step=1
+                )
+
+                urgency = st.selectbox(
+                    "Urgency",
+                    [
+                        "Normal",
+                        "Urgent",
+                        "Emergency",
+                    ]
+                )
+
+            with col2:
+
+                hospital = st.text_input(
+                    "Hospital"
+                )
+
+                location = st.text_input(
+                    "Location"
+                )
+
+                latitude = st.number_input(
+                    "Latitude",
+                    format="%.6f"
+                )
+
+                longitude = st.number_input(
+                    "Longitude",
+                    format="%.6f"
+                )
+
+            submitted = st.form_submit_button(
+                "Create Blood Request",
+                type="primary"
+            )
+
+        if submitted:
+
+            if not hospital or not location:
+
+                st.error(
+                    "Please fill in Hospital and Location."
+                )
+
+            else:
+
+                try:
+
+                    create_blood_request(
+                        session,
+                        patient_id=selected_patient.id,
+                        blood_type=blood_type,
+                        units_required=units_required,
+                        urgency=urgency,
+                        hospital=hospital,
+                        location=location,
+                        latitude=latitude,
+                        longitude=longitude,
+                    )
+
+                    st.success(
+                        f"Blood request created successfully "
+                        f"for {selected_patient.name}."
+                    )
+
+                    st.rerun()
+
+                except Exception as e:
+
+                    st.error(
+                        f"Failed to create blood request: {e}"
+                    )
+
+
+    st.divider()
+
+
+    # =====================================================
+    # Load Requests
+    # =====================================================
 
     requests = get_all_blood_requests(session)
 
@@ -255,41 +362,34 @@ try:
 
 
     # =====================================================
-    # Page Header
-    # =====================================================
-
-    st.title("Blood Requests")
-
-    st.caption(
-        "Manage and monitor blood donation requests"
-    )
-
-
-    # =====================================================
-    # Statistics
+    # Statistics Cards
     # =====================================================
 
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
+
         st.metric(
             "Total Requests",
             total_requests
         )
 
     with col2:
+
         st.metric(
             "Emergency",
             emergency_requests
         )
 
     with col3:
+
         st.metric(
             "Pending",
             pending_requests
         )
 
     with col4:
+
         st.metric(
             "Fulfilled",
             fulfilled_requests
@@ -401,7 +501,6 @@ try:
 
     else:
 
-        # Newest requests first
         filtered_requests = sorted(
             filtered_requests,
             key=lambda r: r.created_at,
@@ -556,15 +655,26 @@ try:
 
 
                 # =================================================
-                # Status / Units / Update Status (التعديل الجديد هنا)
+                # Status / Units / Request ID
                 # =================================================
 
                 col1, col2, col3 = st.columns(3)
 
-                status_options = ["Pending", "Matching", "Fulfilled", "Cancelled"]
-                current_index = status_options.index(request.status) if request.status in status_options else 0
+                status_options = [
+                    "Pending",
+                    "Matching",
+                    "Fulfilled",
+                    "Cancelled",
+                ]
+
+                current_index = (
+                    status_options.index(request.status)
+                    if request.status in status_options
+                    else 0
+                )
 
                 with col1:
+
                     new_status = st.selectbox(
                         "Update Status",
                         options=status_options,
@@ -603,26 +713,132 @@ try:
                 col_btn1, col_btn2 = st.columns(2)
 
                 with col_btn1:
-                    # زر لحفظ حالة الطلب الجديدة إذا تغيرت
+
                     if new_status != request.status:
-                        if st.button("Save Status Change", key=f"save_status_{request.id}", use_container_width=True):
-                            request.status = new_status
-                            session.commit()
-                            st.success(f"Updated Request #{request.id} to {new_status}!")
-                            st.rerun()
+
+                        if st.button(
+                            "Save Status Change",
+                            key=f"save_status_{request.id}",
+                            use_container_width=True
+                        ):
+
+                            try:
+
+                                # =================================
+                                # Fulfill Request
+                                # =================================
+
+                                if (
+                                    new_status == "Fulfilled"
+                                    and request.status != "Fulfilled"
+                                ):
+
+                                    inventory = get_inventory_by_type(
+                                        session,
+                                        request.blood_type
+                                    )
+
+                                    if inventory is None:
+
+                                        st.error(
+                                            f"No inventory found for "
+                                            f"{request.blood_type}."
+                                        )
+
+                                    elif (
+                                        inventory.units_available
+                                        < request.units_required
+                                    ):
+
+                                        st.error(
+                                            f"Not enough "
+                                            f"{request.blood_type} "
+                                            f"blood in inventory. "
+                                            f"Available: "
+                                            f"{inventory.units_available} "
+                                            f"unit(s), Required: "
+                                            f"{request.units_required} "
+                                            f"unit(s)."
+                                        )
+
+                                    else:
+
+                                        # Deduct blood units
+                                        inventory.units_available -= (
+                                            request.units_required
+                                        )
+
+                                        # Update request status
+                                        request.status = "Fulfilled"
+
+                                        session.commit()
+
+                                        st.success(
+                                            f"Request #{request.id} "
+                                            f"fulfilled successfully. "
+                                            f"{request.units_required} "
+                                            f"unit(s) of "
+                                            f"{request.blood_type} "
+                                            f"deducted from inventory."
+                                        )
+
+                                        st.rerun()
+
+                                else:
+
+                                    # Normal status update
+                                    request.status = new_status
+
+                                    session.commit()
+
+                                    st.success(
+                                        f"Updated Request "
+                                        f"#{request.id} "
+                                        f"to {new_status}!"
+                                    )
+
+                                    st.rerun()
+
+                            except Exception as e:
+
+                                session.rollback()
+
+                                st.error(
+                                    f"Failed to update request: {e}"
+                                )
+
 
                 with col_btn2:
-                    if request.status not in ["Fulfilled", "Cancelled"]:
+
+                    if request.status not in [
+                        "Fulfilled",
+                        "Cancelled"
+                    ]:
+
                         if st.button(
                             "Find Compatible Donors",
                             key=f"match_{request.id}",
                             use_container_width=True
                         ):
-                            st.session_state["selected_request_id"] = request.id
-                            st.success(f"Request #{request.id} selected.")
-                            st.info("Go to the Matching page to find the best donors.")
+
+                            st.session_state[
+                                "selected_request_id"
+                            ] = request.id
+
+                            st.success(
+                                f"Request #{request.id} selected."
+                            )
+
+                            st.info(
+                                "Go to the Matching page "
+                                "to find the best donors."
+                            )
+
                     else:
-                        st.caption("This request is no longer active.")
+
+                        st.caption(
+                            "This request is no longer active."
+                        )
 
                 st.write("")
 

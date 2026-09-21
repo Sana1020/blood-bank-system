@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 
@@ -21,16 +22,12 @@ st.set_page_config(
 
 
 # =========================================================
-# Custom Theme - Sidebar
+# Custom Theme
 # =========================================================
 
 st.markdown(
     """
     <style>
-
-    /* =========================
-       Sidebar
-       ========================= */
 
     section[data-testid="stSidebar"] {
         background-color: #991b1b;
@@ -48,11 +45,6 @@ st.markdown(
         color: #991b1b !important;
     }
 
-
-    /* =========================
-       Main Titles
-       ========================= */
-
     h1 {
         color: #991b1b !important;
         font-weight: 800 !important;
@@ -68,11 +60,6 @@ st.markdown(
         color: #1f2937 !important;
         font-weight: 700 !important;
     }
-
-
-    /* =========================
-       Metrics
-       ========================= */
 
     div[data-testid="stMetric"] {
         background-color: white;
@@ -91,11 +78,6 @@ st.markdown(
         font-weight: 800 !important;
     }
 
-
-    /* =========================
-       Buttons
-       ========================= */
-
     div.stButton > button {
         background-color: #991b1b;
         color: white !important;
@@ -109,23 +91,21 @@ st.markdown(
         color: white !important;
     }
 
-
-    /* =========================
-       Divider
-       ========================= */
-
     hr {
         border: none;
         border-top: 1px solid #e1e5ea;
         margin: 35px 0;
     }
 
+    div[data-testid="stDataFrame"] {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
     </style>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
-
-
 
 
 # =========================================================
@@ -282,7 +262,6 @@ try:
             blood_types_options,
         )
 
-
         selected_inventory = get_inventory_by_type(
             session,
             selected_type,
@@ -310,19 +289,35 @@ try:
                 type="primary",
             ):
 
-                update_inventory(
+                updated_inventory = update_inventory(
                     session,
                     selected_type,
                     new_units,
                 )
 
-                st.success(
-                    f"{selected_type} inventory updated."
-                )
+                if updated_inventory:
 
-                st.rerun()
+                    st.success(
+                        f"✅ {selected_type} inventory updated "
+                        f"successfully to "
+                        f"{updated_inventory.units_available} units."
+                    )
 
+                    # Update displayed value immediately
+                    st.write(
+                        f"Updated stock: "
+                        f"**{updated_inventory.units_available} units**"
+                    )
+
+                else:
+
+                    st.error(
+                        f"❌ No inventory record found for "
+                        f"{selected_type}."
+                    )
 
 finally:
 
     session.close()
+
+

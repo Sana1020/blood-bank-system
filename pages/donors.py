@@ -1,8 +1,17 @@
+### `donors.py`
+
+
 import streamlit as st
 from datetime import date
 
 from src.database.connection import SessionLocal
-from src.database.crud import create_donor, get_all_donors
+from src.database.crud import (
+    create_donor,
+    get_all_donors,
+    get_donor,
+    create_completed_donation,
+    get_donations_by_donor,
+)
 
 
 # =========================================================
@@ -219,7 +228,6 @@ if submitted:
 
     errors = []
 
-    # Name validation
     if not name.strip():
         errors.append(
             "Please enter the donor's full name."
@@ -230,7 +238,6 @@ if submitted:
             "The donor's name must contain at least 2 characters."
         )
 
-    # Age validation
     if age < MIN_DONOR_AGE or age > MAX_DONOR_AGE:
         errors.append(
             f"Invalid donor age. "
@@ -238,7 +245,6 @@ if submitted:
             f"{MIN_DONOR_AGE} and {MAX_DONOR_AGE} years."
         )
 
-    # Phone validation
     cleaned_phone = phone.strip().replace(" ", "")
 
     if not cleaned_phone:
@@ -258,13 +264,11 @@ if submitted:
             "Please enter a valid phone number."
         )
 
-    # Location validation
     if not location.strip():
         errors.append(
             "Please enter the donor's location."
         )
 
-    # Coordinates validation
     if not (-90 <= latitude <= 90):
         errors.append(
             "Invalid latitude. "
@@ -277,15 +281,14 @@ if submitted:
             "Longitude must be between -180 and 180."
         )
 
-    # Donation date validation
     if last_donation_date is not None:
+
         if last_donation_date > date.today():
             errors.append(
                 "Invalid last donation date. "
                 "The date cannot be in the future."
             )
 
-    # Display validation errors
     if errors:
 
         st.error(
@@ -316,7 +319,15 @@ if submitted:
             )
 
             st.success(
-                "Donor registration completed successfully."
+                "✅ Donor registration completed successfully."
+            )
+
+        except Exception as e:
+
+            session.rollback()
+
+            st.error(
+                f"Error registering donor: {e}"
             )
 
         finally:
@@ -373,7 +384,250 @@ try:
                     f"{'Yes' if donor.is_available else 'No'}"
                 )
 
+                if donor.last_donation_date:
+
+                    st.caption(
+                        f"Last Donation Date: "
+                        f"{donor.last_donation_date}"
+                    )
+
                 st.divider()
+
+finally:
+
+    session.close()
+
+
+# =========================================================
+# Record Donation
+# =========================================================
+
+st.subheader("Record Donation")
+
+session = SessionLocal()
+
+try:
+
+    donors = get_all_donors(session)
+
+    if not donors:
+
+        st.info(
+            "Please register a donor before recording a donation."
+        )
+
+    else:
+
+        donor_options = {
+            f"{donor.name} (ID: {donor.id}) - {donor.blood_type}":
+            donor.id
+            for donor in donors
+        }
+
+        selected_donor_name = st.selectbox(
+            "Select Donor",
+            list(donor_options.keys()),
+            key="record_donation_donor",
+        )
+
+        selected_donor_id = donor_options[
+            selected_donor_name
+        ]
+
+        selected_donor = get_donor(
+            session,
+            selected_donor_id
+        )
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            st.info(
+                f"**Donor:** {selected_donor.name}\n\n"
+                f"**Blood Type:** {selected_donor.blood_type}"
+            )
+
+        with col2:
+
+            if selected_donor.last_donation_date:
+
+                st.info(
+                    f"**Last Donation:** "
+                    f"{selected_donor.last_donation_date}"
+                )
+
+            else:
+
+                st.info(
+                    "**Last Donation:** No previous donation"
+                )
+
+        donation_date = st.date_input(
+            "Donation Date",
+            value=date.today(),
+            key="donation_date",
+        )
+
+        units_donated = st.number_input(
+            "Units Donated",
+            min_value=1,
+            value=1,
+            step=1,
+            key="units_donated",
+        )
+
+        donation_location = st.text_input(
+            "Donation Location",
+            value=selected_donor.location,
+            placeholder="Enter donation location",
+            key="donation_location",
+        )
+
+        record_donation = st.button(
+            "Record Donation",
+            type="primary",
+        )
+
+        if record_donation:
+
+            errors = []
+
+            if donation_date > date.today():
+
+                errors.append(
+                    "Donation date cannot be in the future."
+                )
+
+            if units_donated <= 0:
+
+                errors.append(
+                    "Units donated must be greater than 0."
+                )
+
+            if not donation_location.strip():
+
+                errors.append(
+                    "Please enter the donation location."
+                )
+
+            if errors:
+
+                st.error(
+                    "Please correct the following issues:"
+                )
+
+                for error in errors:
+                    st.warning(error)
+
+            else:
+
+                try:
+
+                    donation = create_completed_donation(
+                        session,
+                        donor_id=selected_donor_id,
+                        donation_date=donation_date,
+                        units_donated=int(units_donated),
+                        location=donation_location.strip(),
+                    )
+
+                    st.success(
+                        f"✅ Donation recorded successfully. "
+                        f"{int(units_donated)} unit(s) of "
+                        f"{selected_donor.blood_type} "
+                        f"added to inventory."
+                    )
+
+                except Exception as e:
+
+                    session.rollback()
+
+                    st.error(
+                        f"Error recording donation: {e}"
+                    )
+
+finally:
+
+    session.close()
+
+
+# =========================================================
+# Donation History
+# =========================================================
+
+st.divider()
+
+st.subheader("Donation History")
+
+session = SessionLocal()
+
+try:
+
+    donors = get_all_donors(session)
+
+    if donors:
+
+        history_options = {
+            f"{donor.name} (ID: {donor.id})":
+            donor.id
+            for donor in donors
+        }
+
+        selected_history_name = st.selectbox(
+            "Select Donor",
+            list(history_options.keys()),
+            key="donation_history_donor",
+        )
+
+        selected_history_id = history_options[
+            selected_history_name
+        ]
+
+        donations = get_donations_by_donor(
+            session,
+            selected_history_id
+        )
+
+        if donations:
+
+            for donation in donations:
+
+                col1, col2, col3, col4 = st.columns(4)
+
+                col1.write(
+                    f"**Date:** {donation.donation_date}"
+                )
+
+                col2.write(
+                    f"**Blood Type:** {donation.blood_type}"
+                )
+
+                col3.write(
+                    f"**Units:** {donation.units_donated}"
+                )
+
+                col4.write(
+                    f"**Status:** {donation.status}"
+                )
+
+                st.caption(
+                    f"Location: {donation.location}"
+                )
+
+                st.divider()
+
+        else:
+
+            st.info(
+                "No donations recorded for this donor."
+            )
+
+    else:
+
+        st.info(
+            "No donors available."
+        )
 
 finally:
 

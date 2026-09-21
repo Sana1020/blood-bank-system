@@ -1,3 +1,4 @@
+
 import streamlit as st
 
 from src.database.connection import SessionLocal
@@ -182,8 +183,6 @@ st.markdown(
 )
 
 
-
-
 # =========================================================
 # Sidebar
 # =========================================================
@@ -206,6 +205,7 @@ with st.sidebar:
     st.divider()
 
     st.success("System Operational")
+
 
 # =========================================================
 # Page Header
@@ -293,6 +293,12 @@ try:
     ]
 
     total_donations = len(donations)
+
+    completed_donations = sum(
+        1
+        for donation in donations
+        if donation.status == "Completed"
+    )
 
     total_matches = len(matches)
 
@@ -518,9 +524,7 @@ try:
 
     st.subheader("System Activity")
 
-    col1, col2 = st.columns(2)
-
-    
+    col1, col2, col3 = st.columns(3)
 
     col1.metric(
         "Total Matches",
@@ -530,6 +534,11 @@ try:
     col2.metric(
         "Blood Types",
         len(inventory),
+    )
+
+    col3.metric(
+        "Completed Donations",
+        completed_donations,
     )
 
 
